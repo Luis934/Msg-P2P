@@ -1,5 +1,5 @@
 ////// SERVER
-
+#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <string.h>
 
+//VERIFICAMOS QUE NUESTRO SOCKET PUEDA SER USADO
 int openSocket();
 void bindToPort(int, int);
 
@@ -14,8 +15,9 @@ void bindToPort(int, int);
 int main(void)
 {
 	const int PORT = 8080;
-    char* message;
+    char message[254];
 
+	//VERIFICAMOS SI EL SOCKET DEL SERVIDOR ESTA FUNCIONANDO
     int listener=openSocket();
     if (listener==-1)
     {
@@ -37,7 +39,7 @@ int main(void)
         {
             std::cout<<"ATENDIENDO AL CLIENTE\n";
             std::cout<<"ESCRIBIR MENSAJE PARA EL CLIENTE:\n";
-            gets(message);
+            scanf("%[^\n]",message);
             send(connect,message,strlen(message),0);
 
         }
@@ -50,24 +52,28 @@ int main(void)
 
 int openSocket()
 {
-    int socket = socket(AF_INET, SOCK_STREAM,0);
-    if (socket == -1) std::cout<<"ERROR: EL SOCKET NO HA PODIDO ABRIRSE\n";
+    int server = socket(AF_INET, SOCK_STREAM,0);
+    if (server == -1) std::cout<<"ERROR: EL SOCKET NO HA PODIDO ABRIRSE\n";
 
-    return socket;
+    return server;
 }
 
 void bindToPort(int socket, int PORT)
 {
+	//EN ESTA FUNCION GUARDAMOS TODOS LOS DATOS DEL SOCKET SERVIDOR
+	
     struct sockaddr_in adressServer;
     adressServer.sin_family = AF_INET;
     adressServer.sin_port = (in_port_t)htons(PORT);
     adressServer.sin_addr.s_addr=htonl(INADDR_ANY);
 
+
+//COMO HAY VARIOS LLAMADOS AL SERVIDOR, CONSULTAMOS QUE EL SOCKET USADO INICIALMENTE SIGA DISPONIBLE
     int reuse=1;
 
     if(setsockopt(socket,SOL_SOCKET, SO_REUSEADDR,(char*)&reuse,sizeof(int))==-1) std::cout<<"ERROR: NO SE PUEDE REUTILIZAR ESTE SOCKET\n";
 
     int temp=bind(socket, (struct sockaddr*)&adressServer, sizeof(adressServer));
-    if(temp==-1)perror("ERROR: NO SE PUEDE ENLAZAR AL PUERTO O YA EST EN USO\n");
+    if(temp==-1)perror("ERROR: NO SE PUEDE ENLAZAR AL PUERTO O YA ESTA EN USO\n");
 
 }
