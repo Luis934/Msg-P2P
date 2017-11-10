@@ -1,0 +1,73 @@
+////// SERVER
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <string.h>
+
+int openSocket();
+void bindToPort(int, int);
+
+
+int main(void)
+{
+	const int PORT = 8080;
+    char* message;
+
+    int listener=openSocket();
+    if (listener==-1)
+    {
+        std::cout<<"ERROR: EL SOCKET NO ESTÁ ESCUCHANDO\n";
+        return 0;
+    }
+
+    bindToPort(listener,PORT);
+
+    while(true)
+    {
+        struct sockaddr_storage client;
+        unsigned int sizeAdress=sizeof(client);
+        std::cout<<"ESPERANDO AL CLIENTE...\n";
+
+        int connect = accept(listener,(struct sockaddr*)&client, &sizeAdress);
+        if(connect==-1)std::cout<<"ERROR: NO SE PUEDE CONECTAR AL CLIENTE\n";
+        else
+        {
+            std::cout<<"ATENDIENDO AL CLIENTE\n";
+            std::cout<<"ESCRIBIR MENSAJE PARA EL CLIENTE:\n";
+            gets(message);
+            send(connect,message,strlen(message),0);
+
+        }
+    }
+
+
+
+	return 0;
+}
+
+int openSocket()
+{
+    int socket = socket(AF_INET, SOCK_STREAM,0);
+    if (socket == -1) std::cout<<"ERROR: EL SOCKET NO HA PODIDO ABRIRSE\n";
+
+    return socket;
+}
+
+void bindToPort(int socket, int PORT)
+{
+    struct sockaddr_in adressServer;
+    adressServer.sin_family = AF_INET;
+    adressServer.sin_port = (in_port_t)htons(PORT);
+    adressServer.sin_addr.s_addr=htonl(INADDR_ANY);
+
+    int reuse=1;
+
+    if(setsockopt(socket,SOL_SOCKET, SO_REUSEADDR,(char*)&reuse,sizeof(int))==-1) std::cout<<"ERROR: NO SE PUEDE REUTILIZAR ESTE SOCKET\n";
+
+    int temp=bind(socket, (struct sockaddr*)&adressServer, sizeof(adressServer));
+    if(temp==-1)perror("ERROR: NO SE PUEDE ENLAZAR AL PUERTO O YA EST EN USO\n");
+
+}
